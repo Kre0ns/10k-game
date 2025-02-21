@@ -16,7 +16,8 @@ def one_to_ten(list_rolls):
     for item in list_rolls:
         if item == 1:
             new_list.append(10)
-        new_list.append(item)
+        else:
+            new_list.append(item)
     return new_list
 
 
@@ -43,5 +44,5 @@ def points_calc(unsorted_rolls):
             elif counter_dict_rolls[roll] == 6:
                 points += 4 * (roll * 100)
             elif roll == 10 or roll == 5:
-                points += roll * 10
+                points += (roll * 10) * counter_dict_rolls[roll]
     return points
