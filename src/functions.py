@@ -1,5 +1,6 @@
 from random import SystemRandom
 from collections import Counter
+from player import Player
 
 
 # returns a list of dice rolls
@@ -62,3 +63,8 @@ def points_calc(raw_rolls):
                 points += (roll * 10) * roll_frequencies[roll]
 
     return points
+
+
+def add_player(name, player_list):
+    player_list.append(Player(name))
+    return player_list
