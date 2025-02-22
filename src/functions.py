@@ -66,6 +66,7 @@ def points_calc(raw_rolls):
 
 
 # create new player and add to list
-def add_player(name, player_list):
+def create_new_player(name, player_list):
     player_list.append(Player(name))
+
     return player_list
