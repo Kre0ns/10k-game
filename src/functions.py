@@ -2,6 +2,7 @@ from random import SystemRandom
 from collections import Counter
 
 
+# returns a list of dice rolls
 def dice_rolls(num_rolls):
     rolls = []
 
@@ -11,6 +12,7 @@ def dice_rolls(num_rolls):
     return rolls
 
 
+# replaces all 1's in a list with 10's (needed for point logic)
 def one_to_ten(raw_rolls):
     parsed_rolls = []
 
@@ -24,6 +26,7 @@ def one_to_ten(raw_rolls):
     return parsed_rolls
 
 
+# calculates the points from a list of rolls provided
 def points_calc(raw_rolls):
     parsed_rolls = one_to_ten(raw_rolls)
 
