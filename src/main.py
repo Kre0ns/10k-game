@@ -28,7 +28,7 @@ def main():
                 pad_top = 10
 
             # player frame config
-            player_frame = customtkinter.CTkFrame(player_holder_frame, height=250)
+            player_frame = customtkinter.CTkFrame(player_holder_frame)
             player_frame.grid_columnconfigure((0), weight=4)
             player_frame.grid_columnconfigure((1), weight=1)
             player_frame.grid_rowconfigure((0), weight=1)
