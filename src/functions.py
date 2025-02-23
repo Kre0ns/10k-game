@@ -65,6 +65,19 @@ def points_calc(raw_rolls):
     return points
 
 
+# compares the scores to find the highest score and returns the player with it
+def find_winner(player_list):
+    best_score = 0
+    winner = None
+
+    for player in player_list:
+        if player.points > best_score:
+            best_score = player.points
+            winner = player
+
+    return winner
+
+
 # create new player and add to list
 def add_player(name, player_list):
     player_list.append(Player(name))
