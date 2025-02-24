@@ -53,6 +53,13 @@ def main():
             delete_button.propagate(False)
             delete_button.grid(column=2, row=0, sticky="e")
 
+    def game_loop():
+        pass
+
+    def start_game():
+        if len(player_frame_list) > 1:
+            game_loop()
+
     # initializing app
     app = customtkinter.CTk()
     app.title("10K")
