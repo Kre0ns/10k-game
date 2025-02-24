@@ -1,9 +1,16 @@
 import customtkinter
 import functions
+from player import Player
 
 
 def main():
-    player_list = []  # stores the current players
+    # delete the a player frame and object
+    def delete_player(frame, frame_list):
+        # Remove the frame from the list
+        frame_list.remove(frame)
+
+        # Remove the frame from the GUI
+        frame.destroy()
 
     # gets the dice rolls and displays them on screen
     def roll_dice():
@@ -14,39 +21,37 @@ def main():
 
     # adds a new player to the player list and creates label for it on screen
     def add_player():
-        nonlocal player_list
         player_name = player_name_entry.get()
 
-        if player_name and len(player_list) < 6:
-            player_list = functions.create_new_player(
-                player_name, player_list
-            )  # adding player to list
-
-            pad_top = 0  # used to pad first widget
-
-            if len(player_frame_list) == 0:
-                pad_top = 10
+        if player_name and len(player_frame_list) < 6:
+            new_player = Player(player_name)
 
             # player frame config
             player_frame = customtkinter.CTkFrame(player_holder_frame)
-            player_frame.grid_columnconfigure((0), weight=4)
-            player_frame.grid_columnconfigure((1), weight=1)
+            player_frame.player = new_player
+            player_frame.grid_columnconfigure((0, 1), weight=3)
+            player_frame.grid_columnconfigure(2, weight=1)
             player_frame.grid_rowconfigure((0), weight=1)
-            player_frame.propagate(False)
-            player_frame.grid(
-                column=0,
-                row=len(player_frame_list),
-                padx=10,
-                pady=(pad_top, 10),
-                sticky="ewns",
-            )
+            player_frame.grid(column=0, padx=10, pady=(10, 0), sticky="ew")
 
             # player label config
             player_label = customtkinter.CTkLabel(player_frame, text=player_name)
             player_label.grid(column=0, row=0)
 
+            points_label = customtkinter.CTkLabel(player_frame, text=new_player.points)
+            points_label.grid(column=1, row=0)
+
             # adding player frame to player frame list
             player_frame_list.append(player_frame)
+
+            delete_button = customtkinter.CTkButton(
+                player_frame,
+                width=10,
+                text="X",
+                command=lambda f=player_frame: delete_player(f, player_frame_list),
+            )
+            delete_button.propagate(False)
+            delete_button.grid(column=2, row=0, sticky="e")
 
     # initializing app
     app = customtkinter.CTk()
@@ -75,7 +80,6 @@ def main():
     # player holder frame config (a frame for the player frames)
     player_holder_frame = customtkinter.CTkFrame(app)
     player_holder_frame.grid_columnconfigure((0), weight=1)
-    player_holder_frame.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
     player_holder_frame.grid_propagate(False)
     player_frame_list = []  # stores the player frames
 

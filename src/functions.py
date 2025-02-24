@@ -1,6 +1,5 @@
 from random import SystemRandom
 from collections import Counter
-from player import Player
 
 
 # returns a list of dice rolls
@@ -76,10 +75,3 @@ def find_winner(player_list):
             winner = player
 
     return winner
-
-
-# create new player and add to list
-def create_new_player(name, player_list):
-    player_list.append(Player(name))
-
-    return player_list
