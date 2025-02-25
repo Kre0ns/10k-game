@@ -4,6 +4,27 @@ from player import Player
 
 
 def main():
+    # game state variables
+    game_state_dict = {
+        "current_player": 0,
+        "player_list": [],
+        "selcted_dice": [],
+        "turn_points": 0,
+        "game_started": False,
+        "final_round": False,
+    }
+
+    def reset_game():
+        game_state_dict.update(
+            {
+                "current_player": 0,
+                "selected_dice": [],
+                "turn_points": 0,
+                "game_started": False,
+                "final_round": False,
+            }
+        )
+
     # delete the a player frame and object
     def delete_player(frame, frame_list):
         # Remove the frame from the list
