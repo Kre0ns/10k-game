@@ -10,7 +10,8 @@ class TenThousandGame(customtkinter.CTk):
         # Initialize game state
         self.current_player = 0
         self.player_list = []
-        self.selected_dice = []
+        self.unlocked_dice = []
+        self.current_rolls = []
         self.turn_points = 0
         self.game_started = False
         self.final_round = False
@@ -32,6 +33,7 @@ class TenThousandGame(customtkinter.CTk):
         # Initialize game board
         self._create_game_board()
 
+    # creates the UI elements
     def _create_game_board(self):
         # Create frames
         self._create_dice_frame()
@@ -39,6 +41,7 @@ class TenThousandGame(customtkinter.CTk):
         self._create_player_frame()
         self._create_control_buttons()
 
+    # creates the dice frame and fills it
     def _create_dice_frame(self):
         self.dice_frame = customtkinter.CTkFrame(self)
         self.dice_frame.grid_columnconfigure(0, weight=1)
@@ -52,6 +55,7 @@ class TenThousandGame(customtkinter.CTk):
             dice.grid(row=i, column=0)
             self.dice_list.append(dice)
 
+    # creates the checkbox frame and fills it
     def _create_checkbox_frame(self):
         self.checkbox_frame = customtkinter.CTkFrame(self)
         self.checkbox_frame.grid_columnconfigure(0, weight=1)
@@ -65,6 +69,7 @@ class TenThousandGame(customtkinter.CTk):
             checkbox.grid(row=i, column=0)
             self.checkbox_list.append(checkbox)
 
+    # creates the player frame
     def _create_player_frame(self):
         self.player_holder_frame = customtkinter.CTkFrame(self)
         self.player_holder_frame.grid_columnconfigure(0, weight=1)
@@ -73,6 +78,7 @@ class TenThousandGame(customtkinter.CTk):
             column=2, row=0, padx=(0, 10), pady=10, sticky="nsew"
         )
 
+    # creates the control buttons
     def _create_control_buttons(self):
         # Roll button
         self.roll_button = customtkinter.CTkButton(
@@ -104,27 +110,11 @@ class TenThousandGame(customtkinter.CTk):
             column=2, row=2, padx=(0, 10), pady=(0, 10), sticky="nsew"
         )
 
-    def reset_game(self):
-        self.current_player = 0
-        self.selected_dice = []
-        self.turn_points = 0
-        self.game_started = False
-        self.final_round = False
-
-    def delete_player(self, frame):
-        self.player_frame_list.remove(frame)
-        frame.destroy()
-
-    def roll_dice(self):
-        rolls = functions.dice_rolls(6)
-
-        for index, dice in enumerate(self.dice_list):
-            dice.configure(text=rolls[index])
-
+    # adds a player
     def add_player(self):
         player_name = self.player_name_entry.get()
 
-        if player_name and len(self.player_frame_list) < 6:
+        if player_name and len(self.player_list) < 6:
             new_player = Player(player_name)
             self.player_list.append(new_player)
 
@@ -154,6 +144,38 @@ class TenThousandGame(customtkinter.CTk):
 
             self.player_frame_list.append(player_frame)
 
+    # deletes a player
+    def delete_player(self, frame):
+        self.player_frame_list.remove(frame)
+        frame.destroy()
+
+    # updates the unlocked dice based on the checkboxes
+    def update_unlocked(self):
+        self.unlocked_dice = []
+
+        for i, checkbox in enumerate(self.checkbox_list):
+            if checkbox.cget("state") == "normal" and checkbox.get() == 0:
+                self.unlocked_dice.append(self.dice_list[i])
+
+            elif checkbox.cget("state") == "normal" and checkbox.get() == 1:
+                checkbox.configure(state="disabled")
+
+    # rolls the dice and sets the dice labels
+    def roll_dice(self):
+        self.current_rolls = functions.dice_rolls(len(self.unlocked_dice))
+
+        for i, dice in enumerate(self.unlocked_dice):
+            dice.configure(text=self.current_rolls[i])
+
+    # resets the game state
+    def reset_game(self):
+        self.current_player = 0
+        self.unlocked_dice = []
+        self.turn_points = 0
+        self.game_started = False
+        self.final_round = False
+
+    # WIP game loop
     def game_loop(self):
         # To be implemented
         pass
@@ -171,7 +193,7 @@ class TenThousandGame(customtkinter.CTk):
     # starts new turn and reset the turn points and selcted dice
     def start_turn(self):
         self.turn_points = 0
-        self.selected_dice = []
+        self.unlocked_dice = []
 
 
 if __name__ == "__main__":
