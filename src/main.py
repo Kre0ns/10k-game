@@ -158,9 +158,20 @@ class TenThousandGame(customtkinter.CTk):
         # To be implemented
         pass
 
+    # starts the game loop if there is more than one player
     def start_game(self):
         if len(self.player_frame_list) > 1:
             self.game_loop()
+
+    # ends turn adds points to player and moves the turn to the next player
+    def end_turn(self):
+        self.player_list[self.current_player].add_points(self.turn_points)
+        self.current_player = (self.current_player + 1) % len(self.player_list)
+
+    # starts new turn and reset the turn points and selcted dice
+    def start_turn(self):
+        self.turn_points = 0
+        self.selected_dice = []
 
 
 if __name__ == "__main__":
