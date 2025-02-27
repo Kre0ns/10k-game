@@ -144,10 +144,22 @@ class TenThousandGame(customtkinter.CTk):
 
             self.player_frame_list.append(player_frame)
 
+        print("Adding player...")
+
+    # resets checkboxes
+    def reset_checkboxes(self):
+        for i, checkbox in enumerate(self.checkbox_list):
+            checkbox.configure(state="normal")
+            checkbox.deselect()
+
+        print("Reseting checkboxes...")
+
     # deletes a player
     def delete_player(self, frame):
         self.player_frame_list.remove(frame)
         frame.destroy()
+
+        print("Deleting player...")
 
     # updates the unlocked dice based on the checkboxes
     def update_unlocked(self):
@@ -160,12 +172,19 @@ class TenThousandGame(customtkinter.CTk):
             elif checkbox.cget("state") == "normal" and checkbox.get() == 1:
                 checkbox.configure(state="disabled")
 
+        print("Updating dice...")
+
     # rolls the dice and sets the dice labels
     def roll_dice(self):
+        self.update_unlocked()
+        self.reset_checkboxes()
+
         self.current_rolls = functions.dice_rolls(len(self.unlocked_dice))
 
         for i, dice in enumerate(self.unlocked_dice):
             dice.configure(text=self.current_rolls[i])
+
+        print("Rolling dice...")
 
     # resets the game state
     def reset_game(self):
@@ -174,6 +193,8 @@ class TenThousandGame(customtkinter.CTk):
         self.turn_points = 0
         self.game_started = False
         self.final_round = False
+
+        print("Reseting game...")
 
     # WIP game loop
     def game_loop(self):
@@ -185,15 +206,21 @@ class TenThousandGame(customtkinter.CTk):
         if len(self.player_frame_list) > 1:
             self.game_loop()
 
+        print("Starting game...")
+
     # ends turn adds points to player and moves the turn to the next player
     def end_turn(self):
         self.player_list[self.current_player].add_points(self.turn_points)
         self.current_player = (self.current_player + 1) % len(self.player_list)
 
+        print("Ending turn...")
+
     # starts new turn and reset the turn points and selcted dice
     def start_turn(self):
         self.turn_points = 0
         self.unlocked_dice = []
+
+        print("Starting turn...")
 
 
 if __name__ == "__main__":
