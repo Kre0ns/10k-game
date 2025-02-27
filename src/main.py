@@ -131,6 +131,7 @@ class TenThousandGame(customtkinter.CTk):
 
             # Points label
             points_label = customtkinter.CTkLabel(player_frame, text=new_player.points)
+            player_frame.points = points_label
             points_label.grid(column=1, row=0)
 
             # Delete button
