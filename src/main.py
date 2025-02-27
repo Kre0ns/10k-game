@@ -223,6 +223,10 @@ class TenThousandGame(customtkinter.CTk):
 
         print("Starting turn...")
 
+    def update_points(self):
+        for i, player in enumerate(self.player_list):
+            self.player_frame_list[i].points.configure(text=player.points)
+
 
 if __name__ == "__main__":
     game = TenThousandGame()
