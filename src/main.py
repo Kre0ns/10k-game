@@ -177,11 +177,12 @@ class TenThousandGame(customtkinter.CTk):
                 checkbox.configure(state="disabled")
                 self.rolls_to_score.append(self.dice_list[i].roll)
 
-        print("Updating dice...", self.rolls_to_score)
+        print("Updating dice...")
 
     # rolls the dice and sets the dice labels
     def roll_dice(self):
         self.update_unlocked()
+        self.calc_turn_points()
         self.reset_checkboxes()
 
         self.current_rolls = functions.dice_rolls(len(self.unlocked_dice))
@@ -232,6 +233,12 @@ class TenThousandGame(customtkinter.CTk):
     def update_points(self):
         for i, player in enumerate(self.player_list):
             self.player_frame_list[i].points_label.configure(text=player.points)
+
+    # calculates of selcted dice
+    def calc_turn_points(self):
+        points = functions.points_calc(self.rolls_to_score)
+        self.turn_points += points
+        print("calculating points...")
 
 
 if __name__ == "__main__":
