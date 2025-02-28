@@ -9,10 +9,11 @@ class TenThousandGame(customtkinter.CTk):
 
         # Initialize game state
         self.current_player = 0
+        self.turn_points = 0
         self.player_list = []
         self.unlocked_dice = []
         self.current_rolls = []
-        self.turn_points = 0
+        self.rolls_to_score = []
         self.game_started = False
         self.final_round = False
 
@@ -51,7 +52,8 @@ class TenThousandGame(customtkinter.CTk):
 
         # Create dice labels
         for i in range(6):
-            dice = customtkinter.CTkLabel(self.dice_frame, text="-", font=("Arial", 25))
+            dice = customtkinter.CTkLabel(self.dice_frame, text="0", font=("Arial", 25))
+            dice.roll = 0
             dice.grid(row=i, column=0)
             self.dice_list.append(dice)
 
@@ -131,7 +133,7 @@ class TenThousandGame(customtkinter.CTk):
 
             # Points label
             points_label = customtkinter.CTkLabel(player_frame, text=new_player.points)
-            player_frame.points = points_label
+            player_frame.points_label = points_label
             points_label.grid(column=1, row=0)
 
             # Delete button
@@ -165,6 +167,7 @@ class TenThousandGame(customtkinter.CTk):
     # updates the unlocked dice based on the checkboxes
     def update_unlocked(self):
         self.unlocked_dice = []
+        self.rolls_to_score = []
 
         for i, checkbox in enumerate(self.checkbox_list):
             if checkbox.cget("state") == "normal" and checkbox.get() == 0:
@@ -172,8 +175,9 @@ class TenThousandGame(customtkinter.CTk):
 
             elif checkbox.cget("state") == "normal" and checkbox.get() == 1:
                 checkbox.configure(state="disabled")
+                self.rolls_to_score.append(self.dice_list[i].roll)
 
-        print("Updating dice...")
+        print("Updating dice...", self.rolls_to_score)
 
     # rolls the dice and sets the dice labels
     def roll_dice(self):
@@ -183,7 +187,8 @@ class TenThousandGame(customtkinter.CTk):
         self.current_rolls = functions.dice_rolls(len(self.unlocked_dice))
 
         for i, dice in enumerate(self.unlocked_dice):
-            dice.configure(text=self.current_rolls[i])
+            dice.roll = self.current_rolls[i]
+            dice.configure(text=dice.roll)
 
         print("Rolling dice...")
 
@@ -226,7 +231,7 @@ class TenThousandGame(customtkinter.CTk):
     # update the player point labels
     def update_points(self):
         for i, player in enumerate(self.player_list):
-            self.player_frame_list[i].points.configure(text=player.points)
+            self.player_frame_list[i].points_label.configure(text=player.points)
 
 
 if __name__ == "__main__":
