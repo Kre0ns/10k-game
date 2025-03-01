@@ -1,7 +1,8 @@
+from CTkMessagebox import CTkMessagebox
 import customtkinter
 import functions
-from player import Player
 import logging
+from player import Player
 
 
 def main():
@@ -19,17 +20,20 @@ class Game(customtkinter.CTk):
         super().__init__()
 
         self.withdraw()
-        pregame = Pregame(self)
+        sidekick = Sidekick(self)
 
         # Initialize game state
         self.current_player = 0
+        self.final_player = 0
         self.turn_points = 0
         self.player_list = []
         self.unlocked_dice = []
         self.current_rolls = []
         self.rolls_to_score = []
-        self.game_started = False
         self.final_round = False
+        self.did_lock_dice = True
+        self.winner_found = False
+        self.preturn = True
 
         # Configure main window
         self.title("Game")
@@ -66,10 +70,12 @@ class Game(customtkinter.CTk):
 
         # Create dice labels
         for i in range(6):
-            dice = customtkinter.CTkLabel(self.dice_frame, text="0", font=("Arial", 25))
+            dice = customtkinter.CTkLabel(self.dice_frame, text="-", font=("Arial", 25))
             dice.roll = 0
             dice.grid(row=i, column=0)
             self.dice_list.append(dice)
+
+        self.unlocked_dice = self.dice_list
 
     # creates the checkbox frame and fills it
     def _create_checkbox_frame(self):
@@ -98,14 +104,46 @@ class Game(customtkinter.CTk):
     def _create_control_buttons(self):
         # Roll button
         self.roll_button = customtkinter.CTkButton(
-            self, text="Roll The dice!", command=self.roll_dice
+            self, text="Roll dice", command=self.roll_dice
         )
+
+        self.end_turn_button = customtkinter.CTkButton(
+            self, text="End turn", command=self.end_turn
+        )
+
+        self.lock_dice_button = customtkinter.CTkButton(
+            self, text="Lock dice", command=self.lock_dice
+        )
+
+        self.turn_points_label = customtkinter.CTkLabel(self, text="Turn points: 0")
+
         self.roll_button.grid(
             column=0,
             row=1,
-            columnspan=2,
             rowspan=2,
             padx=10,
+            pady=(0, 10),
+            sticky="nsew",
+        )
+        self.end_turn_button.grid(
+            column=2,
+            row=1,
+            rowspan=2,
+            padx=(0, 10),
+            pady=(0, 10),
+            sticky="nsew",
+        )
+        self.lock_dice_button.grid(
+            column=1,
+            row=1,
+            padx=(0, 10),
+            pady=(0, 10),
+            sticky="nsew",
+        )
+        self.turn_points_label.grid(
+            column=1,
+            row=2,
+            padx=(0, 10),
             pady=(0, 10),
             sticky="nsew",
         )
@@ -135,61 +173,50 @@ class Game(customtkinter.CTk):
 
     # resets checkboxes
     def reset_checkboxes(self):
-        for i, checkbox in enumerate(self.checkbox_list):
+        for checkbox in self.checkbox_list:
             checkbox.configure(state="normal")
             checkbox.deselect()
 
         logging.debug("Reseting checkboxes...")
 
-    # deletes a player
-    def delete_player(self, frame):
-        self.player_frame_list.remove(frame)
-        frame.destroy()
-
-        logging.debug("Deleting player...")
-
-    # updates the unlocked dice based on the checkboxes
-    def update_unlocked(self):
-        self.unlocked_dice = []
-        self.rolls_to_score = []
-
-        for i, checkbox in enumerate(self.checkbox_list):
-            if checkbox.cget("state") == "normal" and checkbox.get() == 0:
-                self.unlocked_dice.append(self.dice_list[i])
-
-            elif checkbox.cget("state") == "normal" and checkbox.get() == 1:
-                checkbox.configure(state="disabled")
-                self.rolls_to_score.append(self.dice_list[i].roll)
-
-        logging.debug("Updating dice...")
+    def reset_dice(self):
+        for dice in self.dice_list:
+            dice.configure(text="-")
 
     # rolls the dice and sets the dice labels
     def roll_dice(self):
-        self.update_unlocked()
-        self.calc_turn_points()
+        if self.did_lock_dice:
+            self.preturn = False
+            self.current_rolls = functions.dice_rolls(len(self.unlocked_dice))
 
-        self.current_rolls = functions.dice_rolls(len(self.unlocked_dice))
+            for i, dice in enumerate(self.unlocked_dice):
+                dice.roll = self.current_rolls[i]
+                dice.configure(text=dice.roll)
 
-        for i, dice in enumerate(self.unlocked_dice):
-            dice.roll = self.current_rolls[i]
-            dice.configure(text=dice.roll)
+            if functions.points_calc(self.current_rolls) == 0:
+                self.turn_points = 0
+                self.end_turn()
+            else:
+                self.did_lock_dice = False
+
+        else:
+            CTkMessagebox(
+                self,
+                title="Error",
+                message="Please lock at least one die!",
+                icon="warning",
+            )
 
         logging.debug("Rolling dice...")
 
     # resets the game state
-    def reset_game(self):
-        self.current_player = 0
-        self.unlocked_dice = []
-        self.turn_points = 0
-        self.game_started = False
-        self.final_round = False
+    def reset_board(self):
+        self.reset_checkboxes()
+        self.reset_dice()
+        self.lock_dice()
+        self.turn_points_label.configure(text="Turn points: 0")
 
-        logging.debug("Reseting game...")
-
-    # WIP game loop
-    def game_loop(self):
-        # To be implemented
-        pass
+        logging.debug("Reseting board..")
 
     # starts the game loop if there is more than one player
     def start_game(self, player_list):
@@ -200,21 +227,49 @@ class Game(customtkinter.CTk):
         for player in player_list:
             self.add_player(player)
 
+        self.highlight_current_player()
+
         logging.debug("Starting game...")
 
     # ends turn adds points to player and moves the turn to the next player
     def end_turn(self):
-        self.player_list[self.current_player].add_points(self.turn_points)
-        self.current_player = (self.current_player + 1) % len(self.player_list)
+        if not self.preturn:
+            if self.did_lock_dice:
 
-        logging.debug("Ending turn...")
+                self.player_list[self.current_player].add_points(self.turn_points)
+                self.update_points()
 
-    # starts new turn and reset the turn points and selcted dice
-    def start_turn(self):
-        self.turn_points = 0
-        self.unlocked_dice = []
+                self.is_winner()
 
-        logging.debug("Starting turn...")
+                self.current_player = (self.current_player + 1) % len(self.player_list)
+                self.highlight_current_player()
+
+                self.turn_points = 0
+
+                self.reset_board()
+
+                self.preturn = True
+
+                logging.debug("Ending turn...")
+
+                if self.winner_found:
+                    self.destroy()
+
+            else:
+                CTkMessagebox(
+                    self,
+                    title="Error",
+                    message="Please lock at least one die!",
+                    icon="warning",
+                )
+
+        else:
+            CTkMessagebox(
+                self,
+                title="Error",
+                message="Can't end turn with unrolled dice!",
+                icon="warning",
+            )
 
     # update the player point labels
     def update_points(self):
@@ -225,22 +280,72 @@ class Game(customtkinter.CTk):
     def calc_turn_points(self):
         points = functions.points_calc(self.rolls_to_score)
 
-        if points == 0:
-            self.end_turn()
-        else:
-            self.turn_points += points
+        self.turn_points += points
+        self.turn_points_label.configure(text=f"Turn points: {self.turn_points}")
 
         logging.debug("calculating points...")
 
+    def lock_dice(self):
+        if not self.preturn:
+            self.unlocked_dice = []
+            self.rolls_to_score = []
 
-class Pregame(customtkinter.CTkToplevel):
+            locked_die = False
+
+            for i, checkbox in enumerate(self.checkbox_list):
+                if checkbox.cget("state") == "normal" and checkbox.get() == 0:
+                    self.unlocked_dice.append(self.dice_list[i])
+
+                elif checkbox.cget("state") == "normal" and checkbox.get() == 1:
+                    locked_die = True
+                    checkbox.configure(state="disabled")
+                    self.rolls_to_score.append(self.dice_list[i].roll)
+
+            if locked_die:
+                self.calc_turn_points()
+
+                self.did_lock_dice = True
+        else:
+            CTkMessagebox(
+                self,
+                title="Error",
+                message="Can't lock unrolled dice!",
+                icon="warning",
+            )
+
+    def is_winner(self):
+        if self.final_round:
+            if (self.current_player + 1) % len(self.player_list) == self.final_player:
+                winner = functions.find_winner(self.player_list)
+                winner_message = CTkMessagebox(
+                    self,
+                    title="Winner",
+                    message=f"The winner is: {winner.name} with {winner.points} points!",
+                    icon="check",
+                )
+                winner_message.get()
+                self.winner_found = True
+
+        elif self.player_list[self.current_player].points >= 10000:
+            print("final round")
+            self.final_round = True
+            self.final_player = self.current_player
+
+    def highlight_current_player(self):
+        self.player_frame_list[
+            (self.current_player - 1) % len(self.player_list)
+        ].configure(fg_color=["gray81", "gray20"])
+        self.player_frame_list[self.current_player].configure(fg_color="green")
+
+
+class Sidekick(customtkinter.CTkToplevel):
     def __init__(self, master):
         super().__init__(master)
 
         self.player_list = []
         self.starting_game = False
 
-        self.title("Pregame")
+        self.title("Sidekick")
         self.geometry("220x400")
         self.resizable(False, False)
 
