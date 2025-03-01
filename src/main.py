@@ -4,15 +4,23 @@ from player import Player
 import logging
 
 
-class TenThousandGame(customtkinter.CTk):
+def main():
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(levelname)s - line: %(lineno)d - %(message)s",
+        filename="game_log.log",
+        filemode="w",
+    )
+
+
+class Game(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(asctime)s - %(levelname)s - line: %(lineno)d - %(message)s",
-            filename="game_log.log",
-            filemode="w",
-        )
+
+        self.withdraw()
+        pregame = Pregame(self)
+
         # Initialize game state
         self.current_player = 0
         self.turn_points = 0
@@ -24,7 +32,7 @@ class TenThousandGame(customtkinter.CTk):
         self.final_round = False
 
         # Configure main window
-        self.title("10K")
+        self.title("Game")
         self.geometry("640x400")
         self.resizable(False, False)
 
@@ -102,56 +110,26 @@ class TenThousandGame(customtkinter.CTk):
             sticky="nsew",
         )
 
-        # Player entry
-        self.player_name_entry = customtkinter.CTkEntry(
-            self, placeholder_text="Enter player name"
-        )
-        self.player_name_entry.grid(
-            column=2, row=1, padx=(0, 10), pady=(0, 10), sticky="nsew"
-        )
-
-        # Add player button
-        self.add_player_button = customtkinter.CTkButton(
-            self, text="Add player", command=self.add_player
-        )
-        self.add_player_button.grid(
-            column=2, row=2, padx=(0, 10), pady=(0, 10), sticky="nsew"
-        )
-
     # adds a player
-    def add_player(self):
-        player_name = self.player_name_entry.get()
+    def add_player(self, player):
+        player_name = player.name
 
-        if player_name and len(self.player_list) < 6:
-            new_player = Player(player_name)
-            self.player_list.append(new_player)
+        # Create player frame
+        player_frame = customtkinter.CTkFrame(self.player_holder_frame)
+        player_frame.grid_columnconfigure((0, 1), weight=1)
+        player_frame.grid_rowconfigure(0, weight=1)
+        player_frame.grid(column=0, padx=10, pady=(10, 0), sticky="ew")
 
-            # Create player frame
-            player_frame = customtkinter.CTkFrame(self.player_holder_frame)
-            player_frame.grid_columnconfigure((0, 1), weight=3)
-            player_frame.grid_columnconfigure(2, weight=1)
-            player_frame.grid_rowconfigure(0, weight=1)
-            player_frame.grid(column=0, padx=10, pady=(10, 0), sticky="ew")
+        # Player name label
+        player_label = customtkinter.CTkLabel(player_frame, text=player_name)
+        player_label.grid(column=0, row=0)
 
-            # Player name label
-            player_label = customtkinter.CTkLabel(player_frame, text=player_name)
-            player_label.grid(column=0, row=0)
+        # Points label
+        points_label = customtkinter.CTkLabel(player_frame, text=player.points)
+        player_frame.points_label = points_label
+        points_label.grid(column=1, row=0)
 
-            # Points label
-            points_label = customtkinter.CTkLabel(player_frame, text=new_player.points)
-            player_frame.points_label = points_label
-            points_label.grid(column=1, row=0)
-
-            # Delete button
-            delete_button = customtkinter.CTkButton(
-                player_frame,
-                width=10,
-                text="X",
-                command=lambda f=player_frame: self.delete_player(f),
-            )
-            delete_button.grid(column=2, row=0, sticky="e")
-
-            self.player_frame_list.append(player_frame)
+        self.player_frame_list.append(player_frame)
 
         logging.debug("Adding player...")
 
@@ -189,7 +167,6 @@ class TenThousandGame(customtkinter.CTk):
     def roll_dice(self):
         self.update_unlocked()
         self.calc_turn_points()
-        self.reset_checkboxes()
 
         self.current_rolls = functions.dice_rolls(len(self.unlocked_dice))
 
@@ -215,9 +192,13 @@ class TenThousandGame(customtkinter.CTk):
         pass
 
     # starts the game loop if there is more than one player
-    def start_game(self):
-        if len(self.player_frame_list) > 1:
-            self.game_loop()
+    def start_game(self, player_list):
+        self.deiconify()
+
+        self.player_list = player_list
+
+        for player in player_list:
+            self.add_player(player)
 
         logging.debug("Starting game...")
 
@@ -252,6 +233,115 @@ class TenThousandGame(customtkinter.CTk):
         logging.debug("calculating points...")
 
 
+class Pregame(customtkinter.CTkToplevel):
+    def __init__(self, master):
+        super().__init__(master)
+
+        self.player_list = []
+        self.starting_game = False
+
+        self.title("Pregame")
+        self.geometry("220x400")
+        self.resizable(False, False)
+
+        # Configure columns and rows
+        self.grid_columnconfigure((0, 1), weight=1)
+        self.grid_rowconfigure((0, 1, 2), weight=1)
+
+        self._create_interface()
+
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def _create_interface(self):
+        self.player_holder_frame = customtkinter.CTkFrame(self)
+        self.player_holder_frame.grid_columnconfigure(0, weight=1)
+        self.player_holder_frame.grid_propagate(False)
+        self.player_holder_frame.grid(
+            column=0, row=0, columnspan=2, padx=10, pady=10, sticky="nsew"
+        )
+
+        self.name_entry = customtkinter.CTkEntry(
+            self, placeholder_text="Enter Player name"
+        )
+        self.name_entry.grid(
+            column=0, row=1, columnspan=2, padx=10, pady=(0, 10), sticky="nsew"
+        )
+
+        self.add_player_button = customtkinter.CTkButton(
+            self, text="Add player", command=self.add_player
+        )
+        self.add_player_button.grid(
+            column=0, row=2, padx=10, pady=(0, 10), sticky="nsew"
+        )
+
+        self.start_game_button = customtkinter.CTkButton(
+            self,
+            text="Start game",
+            command=self.start_game,
+            fg_color="red",
+            hover_color="#0a5c0d",
+            text_color_disabled="#DCE4EE",
+            state="disabled",
+        )
+        self.start_game_button.grid(
+            column=1, row=2, padx=(0, 10), pady=(0, 10), sticky="nsew"
+        )
+
+    def add_player(self):
+        player_name = self.name_entry.get().strip()
+
+        if player_name and len(self.player_list) < 6:
+            self.name_entry.delete(0, customtkinter.END)
+
+            new_player = Player(player_name)
+            self.player_list.append(new_player)
+
+            # Create player frame
+            player_frame = customtkinter.CTkFrame(self.player_holder_frame)
+            player_frame.grid_columnconfigure(0, weight=1)
+            player_frame.grid_columnconfigure(1, weight=0)
+            player_frame.grid_rowconfigure(0, weight=1)
+            player_frame.grid(column=0, padx=10, pady=(10, 0), sticky="ew")
+
+            # Player name label
+            player_label = customtkinter.CTkLabel(player_frame, text=player_name)
+            player_label.grid(column=0, row=0)
+
+            # Delete button
+            delete_button = customtkinter.CTkButton(
+                player_frame,
+                width=10,
+                text="X",
+                command=lambda f=player_frame, p=new_player: self.delete_player(f, p),
+            )
+            delete_button.grid(column=1, row=0, sticky="e")
+
+            self.can_start()
+
+    def can_start(self):
+        if len(self.player_list) >= 2:
+            self.start_game_button.configure(fg_color="green", state="normal")
+        else:
+            self.start_game_button.configure(fg_color="red", state="disabled")
+
+    def start_game(self):
+        self.starting_game = True
+        self.master.start_game(self.player_list)
+        self.destroy()
+
+    def delete_player(self, frame, player):
+        self.player_list.remove(player)
+        frame.destroy()
+
+        self.can_start()
+
+    def on_close(self):
+        if not self.starting_game:
+            self.master.destroy()
+
+
 if __name__ == "__main__":
-    game = TenThousandGame()
-    game.mainloop()
+    main()
+
+    app = Game()
+    app.mainloop()
