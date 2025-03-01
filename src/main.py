@@ -1,12 +1,18 @@
 import customtkinter
 import functions
 from player import Player
+import logging
 
 
 class TenThousandGame(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s - %(levelname)s - line: %(lineno)d - %(message)s",
+            filename="game_log.log",
+            filemode="w",
+        )
         # Initialize game state
         self.current_player = 0
         self.turn_points = 0
@@ -147,7 +153,7 @@ class TenThousandGame(customtkinter.CTk):
 
             self.player_frame_list.append(player_frame)
 
-        print("Adding player...")
+        logging.debug("Adding player...")
 
     # resets checkboxes
     def reset_checkboxes(self):
@@ -155,14 +161,14 @@ class TenThousandGame(customtkinter.CTk):
             checkbox.configure(state="normal")
             checkbox.deselect()
 
-        print("Reseting checkboxes...")
+        logging.debug("Reseting checkboxes...")
 
     # deletes a player
     def delete_player(self, frame):
         self.player_frame_list.remove(frame)
         frame.destroy()
 
-        print("Deleting player...")
+        logging.debug("Deleting player...")
 
     # updates the unlocked dice based on the checkboxes
     def update_unlocked(self):
@@ -177,7 +183,7 @@ class TenThousandGame(customtkinter.CTk):
                 checkbox.configure(state="disabled")
                 self.rolls_to_score.append(self.dice_list[i].roll)
 
-        print("Updating dice...")
+        logging.debug("Updating dice...")
 
     # rolls the dice and sets the dice labels
     def roll_dice(self):
@@ -191,7 +197,7 @@ class TenThousandGame(customtkinter.CTk):
             dice.roll = self.current_rolls[i]
             dice.configure(text=dice.roll)
 
-        print("Rolling dice...")
+        logging.debug("Rolling dice...")
 
     # resets the game state
     def reset_game(self):
@@ -201,7 +207,7 @@ class TenThousandGame(customtkinter.CTk):
         self.game_started = False
         self.final_round = False
 
-        print("Reseting game...")
+        logging.debug("Reseting game...")
 
     # WIP game loop
     def game_loop(self):
@@ -213,21 +219,21 @@ class TenThousandGame(customtkinter.CTk):
         if len(self.player_frame_list) > 1:
             self.game_loop()
 
-        print("Starting game...")
+        logging.debug("Starting game...")
 
     # ends turn adds points to player and moves the turn to the next player
     def end_turn(self):
         self.player_list[self.current_player].add_points(self.turn_points)
         self.current_player = (self.current_player + 1) % len(self.player_list)
 
-        print("Ending turn...")
+        logging.debug("Ending turn...")
 
     # starts new turn and reset the turn points and selcted dice
     def start_turn(self):
         self.turn_points = 0
         self.unlocked_dice = []
 
-        print("Starting turn...")
+        logging.debug("Starting turn...")
 
     # update the player point labels
     def update_points(self):
@@ -237,8 +243,13 @@ class TenThousandGame(customtkinter.CTk):
     # calculates of selcted dice
     def calc_turn_points(self):
         points = functions.points_calc(self.rolls_to_score)
-        self.turn_points += points
-        print("calculating points...")
+
+        if points == 0:
+            self.end_turn()
+        else:
+            self.turn_points += points
+
+        logging.debug("calculating points...")
 
 
 if __name__ == "__main__":
