@@ -96,7 +96,7 @@ class Game(customtkinter.CTk):
         self.dice_frame.grid_columnconfigure(0, weight=1)
         self.dice_frame.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
         self.dice_frame.grid_propagate(False)
-        self.dice_frame.grid(column=1, row=0, padx=(0, 10), pady=10, sticky="nsew")
+        self.dice_frame.grid(column=0, row=0, padx=10, pady=10, sticky="nsew")
 
         # Create six dice labels with default text and store them in the dice_list
         for i in range(6):
@@ -117,14 +117,14 @@ class Game(customtkinter.CTk):
         self.checkbox_frame.grid_columnconfigure(0, weight=1)
         self.checkbox_frame.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
         self.checkbox_frame.grid_propagate(False)
-        self.checkbox_frame.grid(column=0, row=0, padx=10, pady=10, sticky="nsew")
+        self.checkbox_frame.grid(column=1, row=0, padx=(0, 10), pady=10, sticky="nsew")
 
         # Add a checkbox for every dice
         for i in range(6):
             checkbox = customtkinter.CTkCheckBox(
-                self.checkbox_frame, text="Lock die --->", font=("Arial", 14, "bold")
+                self.checkbox_frame, text=None
             )
-            checkbox.grid(row=i, column=0)
+            checkbox.grid(row=i, column=0, padx=(0,11), sticky="e")
             self.checkbox_list.append(checkbox)
 
     def _create_player_frame(self):
@@ -160,10 +160,10 @@ class Game(customtkinter.CTk):
 
         # Place the control buttons and label within the grid layout
         self.roll_button.grid(
-            column=1,
+            column=0,
             row=1,
             rowspan=2,
-            padx=(0, 10),
+            padx=10,
             pady=(0, 10),
             sticky="nsew",
         )
@@ -176,16 +176,16 @@ class Game(customtkinter.CTk):
             sticky="nsew",
         )
         self.lock_dice_button.grid(
-            column=0,
+            column=1,
             row=1,
-            padx=10,
+            padx=(0, 10),
             pady=(0, 10),
             sticky="nsew",
         )
         self.turn_points_label.grid(
-            column=0,
+            column=1,
             row=2,
-            padx=10,
+            padx=(0, 10),
             pady=(0, 10),
             sticky="nsew",
         )
@@ -329,7 +329,7 @@ class Game(customtkinter.CTk):
                     # Lock this die and mark its value for scoring
                     locked_die = True
                     checkbox.configure(state="disabled")
-                    self.dice_list[i].configure(bg_color=self.default_text_color)
+                    self.dice_list[i].configure(text_color="grey")
                     self.rolls_to_score.append(self.dice_list[i].roll)
 
             if locked_die:
@@ -435,7 +435,7 @@ class Game(customtkinter.CTk):
         """Clears the dice display back to the default placeholder."""
 
         for dice in self.dice_list:
-            dice.configure(text="-", bg_color="transparent")
+            dice.configure(text="-", text_color=self.default_text_color)
 
     def reset_board(self):
         """Resets the game board UI for the next turn."""
