@@ -9,7 +9,7 @@ def dice_rolls(num_rolls):
     for i in range(num_rolls):
         rolls.append(SystemRandom().randint(1, 6))
 
-    return [1, 5, 3, 4, 6, 2]
+    return rolls
 
 
 # replaces all 1's in a list with 10's (needed for point logic)
