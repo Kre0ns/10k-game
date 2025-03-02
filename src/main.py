@@ -2,15 +2,25 @@ from CTkMessagebox import CTkMessagebox
 import customtkinter
 import functions
 import logging
+from pathlib import Path
 from player import Player
 
 
 def main():
+    #  check for _internal folder in base, if exist log there else log in base
+    log_file = (
+        (
+            Path(__file__).parent / "_internal"
+            if (Path(__file__).parent / "_internal").exists()
+            else Path(__file__).parent
+        )
+    ) / "game_log.log"
+
     # Configure logging for debugging and tracking errors
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s - %(levelname)s - line: %(lineno)d - %(message)s",
-        filename="game_log.log",
+        filename=log_file,
         filemode="w",
     )
 
@@ -20,6 +30,14 @@ class Game(customtkinter.CTk):
         super().__init__()
 
         logging.info("Initializing main window")
+
+        # if _internal exists look for icon in it, else look in base
+        icon_path = (
+            Path(__file__).parent.parent / "_internal"
+            if (Path(__file__).parent.parent / "_internal").exists()
+            else Path(__file__).parent.parent / "res"
+        ) / "icon.ico"
+        self.iconbitmap(icon_path)
 
         # Initially hide the main window and open the sidekick window for player setup
         self.withdraw()
@@ -41,6 +59,7 @@ class Game(customtkinter.CTk):
         self.dice_rolled = (
             False  # True if dice have been rolled during the current turn
         )
+        self.default_text_color = ""
 
         # Set up the main window appearance and behavior
         self.title("Game")
@@ -77,13 +96,15 @@ class Game(customtkinter.CTk):
         self.dice_frame.grid_columnconfigure(0, weight=1)
         self.dice_frame.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
         self.dice_frame.grid_propagate(False)
-        self.dice_frame.grid(column=0, row=0, padx=10, pady=10, sticky="nsew")
+        self.dice_frame.grid(column=1, row=0, padx=(0, 10), pady=10, sticky="nsew")
 
         # Create six dice labels with default text and store them in the dice_list
         for i in range(6):
-            dice = customtkinter.CTkLabel(self.dice_frame, text="-", font=("Arial", 25))
+            dice = customtkinter.CTkLabel(
+                self.dice_frame, text="-", font=("Arial", 25, "bold")
+            )
             dice.roll = 0  # Initialize each dice's roll value
-            dice.grid(row=i, column=0)
+            dice.grid(row=i, column=0, sticky="ew")
             self.dice_list.append(dice)
 
         # At start, all dice are available to roll
@@ -96,11 +117,13 @@ class Game(customtkinter.CTk):
         self.checkbox_frame.grid_columnconfigure(0, weight=1)
         self.checkbox_frame.grid_rowconfigure((0, 1, 2, 3, 4, 5), weight=1)
         self.checkbox_frame.grid_propagate(False)
-        self.checkbox_frame.grid(column=1, row=0, padx=(0, 10), pady=10, sticky="nsew")
+        self.checkbox_frame.grid(column=0, row=0, padx=10, pady=10, sticky="nsew")
 
         # Add a checkbox for every dice
         for i in range(6):
-            checkbox = customtkinter.CTkCheckBox(self.checkbox_frame, text=None)
+            checkbox = customtkinter.CTkCheckBox(
+                self.checkbox_frame, text="Lock die --->", font=("Arial", 14, "bold")
+            )
             checkbox.grid(row=i, column=0)
             self.checkbox_list.append(checkbox)
 
@@ -119,25 +142,28 @@ class Game(customtkinter.CTk):
 
         # Button to roll dice
         self.roll_button = customtkinter.CTkButton(
-            self, text="Roll dice", command=self.roll_dice
+            self, text="Roll dice", command=self.roll_dice, font=("Arial", 17, "bold")
         )
         # Button to end the current turn
         self.end_turn_button = customtkinter.CTkButton(
-            self, text="End turn", command=self.end_turn
+            self, text="End turn", command=self.end_turn, font=("Arial", 17, "bold")
         )
         # Button to lock selected dice for scoring
         self.lock_dice_button = customtkinter.CTkButton(
-            self, text="Lock dice", command=self.lock_dice
+            self, text="Lock dice", command=self.lock_dice, font=("Arial", 17, "bold")
         )
         # Label to show points accumulated during the turn
-        self.turn_points_label = customtkinter.CTkLabel(self, text="Turn points: 0")
+        self.turn_points_label = customtkinter.CTkLabel(
+            self, text="Turn points: 0", font=("Arial", 17, "bold")
+        )
+        self.default_text_color = self.turn_points_label.cget("text_color")
 
         # Place the control buttons and label within the grid layout
         self.roll_button.grid(
-            column=0,
+            column=1,
             row=1,
             rowspan=2,
-            padx=10,
+            padx=(0, 10),
             pady=(0, 10),
             sticky="nsew",
         )
@@ -150,16 +176,16 @@ class Game(customtkinter.CTk):
             sticky="nsew",
         )
         self.lock_dice_button.grid(
-            column=1,
+            column=0,
             row=1,
-            padx=(0, 10),
+            padx=10,
             pady=(0, 10),
             sticky="nsew",
         )
         self.turn_points_label.grid(
-            column=1,
+            column=0,
             row=2,
-            padx=(0, 10),
+            padx=10,
             pady=(0, 10),
             sticky="nsew",
         )
@@ -200,11 +226,15 @@ class Game(customtkinter.CTk):
         player_frame.grid(column=0, padx=10, pady=(10, 0), sticky="ew")
 
         # Display the player's name
-        player_label = customtkinter.CTkLabel(player_frame, text=player_name)
+        player_label = customtkinter.CTkLabel(
+            player_frame, text=player_name, font=("Arial", 14, "bold")
+        )
         player_label.grid(column=0, row=0)
 
         # Display the player's points
-        points_label = customtkinter.CTkLabel(player_frame, text=player.points)
+        points_label = customtkinter.CTkLabel(
+            player_frame, text=player.points, font=("Arial", 14, "bold")
+        )
         player_frame.points_label = points_label
         points_label.grid(column=1, row=0)
 
@@ -273,6 +303,7 @@ class Game(customtkinter.CTk):
                 title="Error",
                 message="Please lock at least one die!",
                 icon="warning",
+                font=("Arial", 14, "bold"),
             )
 
     def lock_dice(self):
@@ -298,6 +329,7 @@ class Game(customtkinter.CTk):
                     # Lock this die and mark its value for scoring
                     locked_die = True
                     checkbox.configure(state="disabled")
+                    self.dice_list[i].configure(bg_color=self.default_text_color)
                     self.rolls_to_score.append(self.dice_list[i].roll)
 
             if locked_die:
@@ -321,6 +353,7 @@ class Game(customtkinter.CTk):
                 title="Error",
                 message="Can't lock unrolled dice!",
                 icon="warning",
+                font=("Arial", 14, "bold"),
             )
 
     def calculate_turn_points(self):
@@ -376,6 +409,7 @@ class Game(customtkinter.CTk):
                     title="Error",
                     message="Please lock at least one die!",
                     icon="warning",
+                    font=("Arial", 14, "bold"),
                 )
 
         else:
@@ -387,6 +421,7 @@ class Game(customtkinter.CTk):
                 title="Error",
                 message="Can't end turn with unrolled dice!",
                 icon="warning",
+                font=("Arial", 14, "bold"),
             )
 
     def reset_checkboxes(self):
@@ -400,7 +435,7 @@ class Game(customtkinter.CTk):
         """Clears the dice display back to the default placeholder."""
 
         for dice in self.dice_list:
-            dice.configure(text="-")
+            dice.configure(text="-", bg_color="transparent")
 
     def reset_board(self):
         """Resets the game board UI for the next turn."""
@@ -430,6 +465,7 @@ class Game(customtkinter.CTk):
                     title="Winner",
                     message=f"The winner is: {winner.name} with {winner.points} points!",
                     icon="check",
+                    font=("Arial", 14, "bold"),
                 )
                 winner_message.get()
                 self.winner_found = True
@@ -447,6 +483,14 @@ class Game(customtkinter.CTk):
 class Sidekick(customtkinter.CTkToplevel):
     def __init__(self, master):
         super().__init__(master)
+
+        # if _internal exists look for icon in it, else look in base
+        icon_path = (
+            Path(__file__).parent.parent / "_internal"
+            if (Path(__file__).parent.parent / "_internal").exists()
+            else Path(__file__).parent.parent / "res"
+        ) / "icon.ico"
+        self.after(200, lambda: self.iconbitmap(icon_path))
 
         # Initialize variables to manage player entry
         self.player_list = []  # List to hold player objects
@@ -491,7 +535,7 @@ class Sidekick(customtkinter.CTkToplevel):
 
         # Button to add the player based on the entered name
         self.add_player_button = customtkinter.CTkButton(
-            self, text="Add player", command=self.add_player
+            self, text="Add player", command=self.add_player, font=("Arial", 14, "bold")
         )
         self.add_player_button.grid(
             column=0, row=2, padx=10, pady=(0, 10), sticky="nsew"
@@ -506,6 +550,7 @@ class Sidekick(customtkinter.CTkToplevel):
             hover_color="#0a5c0d",
             text_color_disabled="#DCE4EE",
             state="disabled",
+            font=("Arial", 14, "bold"),
         )
         self.start_game_button.grid(
             column=1, row=2, padx=(0, 10), pady=(0, 10), sticky="nsew"
@@ -531,7 +576,9 @@ class Sidekick(customtkinter.CTkToplevel):
             player_frame.grid(column=0, padx=10, pady=(10, 0), sticky="ew")
 
             # Show the player's name
-            player_label = customtkinter.CTkLabel(player_frame, text=player_name)
+            player_label = customtkinter.CTkLabel(
+                player_frame, text=player_name, font=("Arial", 14, "bold")
+            )
             player_label.grid(column=0, row=0)
 
             # Button to allow removal of the player if needed
@@ -540,6 +587,7 @@ class Sidekick(customtkinter.CTkToplevel):
                 width=10,
                 text="X",
                 command=lambda f=player_frame, p=new_player: self.delete_player(f, p),
+                font=("Arial", 14, "bold"),
             )
             delete_button.grid(column=1, row=0, sticky="e")
 
