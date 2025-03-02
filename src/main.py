@@ -308,6 +308,10 @@ class Game(customtkinter.CTk):
                 # Allow dice to be rolled again only if they are unlocked
                 self.dice_locked = True
 
+                # If no unlocked dice left end turn
+                if len(self.unlocked_dice) == 0:
+                    self.end_turn()
+
         else:
             # Alert the user if they try to lock dice before any roll
             logging.warning("Lock dice attempted without rolling dice first")
